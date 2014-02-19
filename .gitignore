@@ -33,3 +33,5 @@ Makefile
 Makefile.in
 TAGS
 protocol/.*.valid
+.kdev4
+weston-plugin-test.kdev4
