@@ -268,11 +268,6 @@ AC_ARG_ENABLE(simple-egl-clients,
               AS_HELP_STRING([--disable-simple-egl-clients],
                              [do not build the simple EGL clients]),,
               enable_simple_egl_clients="$enable_egl")
-AM_CONDITIONAL(BUILD_SIMPLE_EGL_CLIENTS, test "x$enable_simple_egl_clients" = "xyes")
-if test x$enable_simple_egl_clients = xyes; then
-  PKG_CHECK_MODULES(SIMPLE_EGL_CLIENT,
-                    [egl >= 7.10 glesv2 wayland-client wayland-egl wayland-cursor])
-fi
 
 AC_ARG_ENABLE(clients, [  --enable-clients],, enable_clients=yes)
 AM_CONDITIONAL(BUILD_CLIENTS, test x$enable_clients = xyes)
@@ -283,9 +278,6 @@ if test x$enable_clients = xyes; then
   PKG_CHECK_MODULES(SERVER, [wayland-server])
   PKG_CHECK_MODULES(WESTON_INFO, [wayland-client])
 
-  PKG_CHECK_MODULES(POPPLER, [poppler-glib glib-2.0 gobject-2.0 gio-2.0 ],
-			     [have_poppler=yes], [have_poppler=no])
-
   # Only check for cairo-egl if a GL or GLES renderer requested
   AS_IF([test "x$cairo_modules" = "xcairo-gl" -o "x$cairo_modules" = "xcairo-glesv2"], [
     PKG_CHECK_MODULES(CAIRO_EGL, [wayland-egl egl >= 7.10 cairo-egl >= 1.11.3 $cairo_modules],
@@ -294,8 +286,6 @@ if test x$enable_clients = xyes; then
 	  [AC_DEFINE([HAVE_CAIRO_EGL], [1], [Have cairo-egl])],
 	  [AC_ERROR([cairo-egl not used because $CAIRO_EGL_PKG_ERRORS])])],
   [have_cairo_egl=no])
-
-  PKG_CHECK_MODULES(PANGO, [pangocairo], [have_pango=yes], [have_pango=no])
 fi
 
 AC_ARG_ENABLE(resize-optimization,
@@ -326,25 +316,6 @@ if test x$enable_weston_launch == xyes; then
   PAM_LIBS=-lpam
   AC_SUBST(PAM_LIBS)
 fi
-
-if test x$enable_egl = xyes; then
-  PKG_CHECK_MODULES(GLU, [glu], [have_glu=yes], [have_glu=no])
-fi
-AM_CONDITIONAL(HAVE_GLU, test "x$have_glu" = "xyes")
-
-
-AM_CONDITIONAL(HAVE_POPPLER, test "x$have_poppler" = "xyes")
-
-AM_CONDITIONAL(HAVE_PANGO, test "x$have_pango" = "xyes")
-
-AM_CONDITIONAL(HAVE_CAIRO_GLESV2,
-	       [test "x$have_cairo_egl" = "xyes" -a "x$cairo_modules" = "xcairo-glesv2" -a "x$enable_egl" = "xyes"])
-
-AM_CONDITIONAL(BUILD_FULL_GL_CLIENTS,
-	       test x$cairo_modules = "xcairo-gl" -a "x$have_cairo_egl" = "xyes" -a "x$enable_egl" = "xyes")
-
-AM_CONDITIONAL(BUILD_SUBSURFACES_CLIENT,
-	       [test '(' "x$have_cairo_egl" != "xyes" -o "x$cairo_modules" = "xcairo-glesv2" ')' -a "x$enable_simple_egl_clients" = "xyes"])
 
 AM_CONDITIONAL(ENABLE_DESKTOP_SHELL, true)
 
@@ -518,7 +489,6 @@ AC_MSG_RESULT([
 	Install Demo Clients		${enable_demo_clients_install}
 
 	Colord Support			${have_colord}
-	GLU Support			${have_glu}
 	LCMS2 Support			${have_lcms}
 	libwebp Support			${have_webp}
 	libunwind Support		${have_libunwind}
