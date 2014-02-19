@@ -85,26 +85,6 @@ AC_ARG_ENABLE(setuid-install, [  --enable-setuid-install],,
 	      enable_setuid_install=yes)
 AM_CONDITIONAL(ENABLE_SETUID_INSTALL, test x$enable_setuid_install = xyes)
 
-
-AC_ARG_ENABLE(xwayland, [  --enable-xwayland],,
-	      enable_xwayland=yes)
-AC_ARG_ENABLE(xwayland-test, [  --enable-xwayland-test],,
-              enable_xwayland_test=yes)
-AM_CONDITIONAL(ENABLE_XWAYLAND, test x$enable_xwayland = xyes)
-AM_CONDITIONAL(ENABLE_XWAYLAND_TEST, test x$enable_xwayland = xyes -a x$enable_xwayland_test = xyes)
-if test x$enable_xwayland = xyes; then
-  PKG_CHECK_MODULES([XWAYLAND], xcb xcb-xfixes xcb-composite xcursor cairo-xcb)
-  AC_DEFINE([BUILD_XWAYLAND], [1], [Build the X server launcher])
-
-  AC_ARG_WITH(xserver-path, AS_HELP_STRING([--with-xserver-path=PATH],
-              [Path to X server]), [XSERVER_PATH="$withval"],
-              [XSERVER_PATH="$bindir/Xorg"])
-  AC_SUBST([XSERVER_PATH])
-  if test x$enable_xwayland_test = xyes; then
-    PKG_CHECK_MODULES([XWAYLAND_TEST], xcb xcb-dri2 libdrm)
-  fi
-fi
-
 PKG_CHECK_MODULES(LIBDRM, [libdrm],
                   [AC_DEFINE(HAVE_LIBDRM, 1, [Define if libdrm is available]) have_libdrm=yes], have_libdrm=no)
 
@@ -496,7 +476,6 @@ AM_CONDITIONAL([HAVE_XMLLINT], [test "x$XMLLINT" != "x" -a "x$dtddir" != "x"])
 AC_CONFIG_FILES([Makefile
 		 shared/Makefile
 		 src/Makefile
-		 xwayland/Makefile
 		 desktop-shell/Makefile
 		 src/version.h
 		 src/weston.pc
@@ -516,7 +495,6 @@ AC_MSG_RESULT([
 	EGL				${enable_egl}
 	libxkbcommon			${enable_xkbcommon}
 	xcb_xkb				${have_xcb_xkb}
-	XWayland			${enable_xwayland}
 	dbus				${enable_dbus}
 
 	Build wcap utility		${enable_wcap_tools}

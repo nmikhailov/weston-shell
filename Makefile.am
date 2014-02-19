@@ -2,14 +2,9 @@ if BUILD_WCAP_TOOLS
 wcap_subdir = wcap
 endif
 
-if ENABLE_XWAYLAND
-xwayland_subdir = xwayland
-endif
-
 SUBDIRS =					\
 	shared					\
 	src					\
-	$(xwayland_subdir)			\
 	desktop-shell				\
 	clients					\
 	data					\

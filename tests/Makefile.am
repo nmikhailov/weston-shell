@@ -14,8 +14,7 @@ weston_tests =				\
 	event.weston			\
 	button.weston			\
 	text.weston			\
-	subsurface.weston		\
-	$(xwayland_test)
+	subsurface.weston
 
 if ENABLE_EGL
 weston_tests +=				\
@@ -124,14 +123,6 @@ subsurface_weston_LDADD = libtest-client.la
 buffer_count_weston_SOURCES = buffer-count-test.c
 buffer_count_weston_CFLAGS = $(GCC_CFLAGS) $(EGL_TESTS_CFLAGS)
 buffer_count_weston_LDADD = libtest-client.la $(EGL_TESTS_LIBS)
-
-xwayland_weston_SOURCES = xwayland-test.c
-xwayland_weston_CFLAGS = $(GCC_CFLAGS) $(XWAYLAND_TEST_CFLAGS)
-xwayland_weston_LDADD = libtest-client.la $(XWAYLAND_TEST_LIBS)
-
-if ENABLE_XWAYLAND_TEST
-xwayland_test = xwayland.weston
-endif
 
 matrix_test_SOURCES =				\
 	matrix-test.c				\
