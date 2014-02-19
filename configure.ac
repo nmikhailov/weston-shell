@@ -482,9 +482,7 @@ AC_CONFIG_FILES([Makefile
 		 clients/Makefile
 		 wcap/Makefile
 		 data/Makefile
-		 protocol/Makefile
-		 man/Makefile
-		 tests/Makefile])
+		 protocol/Makefile])
 AC_OUTPUT
 
 AC_MSG_RESULT([

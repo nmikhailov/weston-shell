@@ -9,9 +9,7 @@ SUBDIRS =					\
 	clients					\
 	data					\
 	protocol				\
-	tests					\
-	$(wcap_subdir)				\
-	man
+	$(wcap_subdir)
 
 DISTCHECK_CONFIGURE_FLAGS = --disable-setuid-install
 
