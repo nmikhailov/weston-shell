@@ -1,14 +1,9 @@
-if BUILD_WCAP_TOOLS
-wcap_subdir = wcap
-endif
-
 SUBDIRS =					\
 	shared					\
 	desktop-shell				\
 	clients					\
 	data					\
-	protocol				\
-	$(wcap_subdir)
+	protocol
 
 DISTCHECK_CONFIGURE_FLAGS = --disable-setuid-install
 

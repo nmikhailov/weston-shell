@@ -360,14 +360,6 @@ if test "x$enable_dbus" != "xno"; then
 fi
 AM_CONDITIONAL(ENABLE_DBUS, test "x$enable_dbus" = "xyes")
 
-AC_ARG_ENABLE(wcap-tools, [  --disable-wcap-tools],, enable_wcap_tools=yes)
-AM_CONDITIONAL(BUILD_WCAP_TOOLS, test x$enable_wcap_tools = xyes)
-if test x$enable_wcap_tools = xyes; then
-  AC_DEFINE([BUILD_WCAP_TOOLS], [1], [Build the wcap tools])
-  PKG_CHECK_MODULES(WCAP, [cairo])
-  WCAP_LIBS="$WCAP_LIBS -lm"
-fi
-
 AC_CHECK_PROG(RSVG_CONVERT, rsvg-convert, rsvg-convert)
 AM_CONDITIONAL(HAVE_RSVG_CONVERT, test -n "$RSVG_CONVERT")
 
@@ -448,7 +440,6 @@ AC_CONFIG_FILES([Makefile
 		 shared/Makefile
 		 desktop-shell/Makefile
 		 clients/Makefile
-		 wcap/Makefile
 		 data/Makefile
 		 protocol/Makefile])
 AC_OUTPUT
@@ -462,8 +453,6 @@ AC_MSG_RESULT([
 	libxkbcommon			${enable_xkbcommon}
 	xcb_xkb				${have_xcb_xkb}
 	dbus				${enable_dbus}
-
-	Build wcap utility		${enable_wcap_tools}
 
 	weston-launch utility		${enable_weston_launch}
 	systemd-login support		${have_systemd_login}
