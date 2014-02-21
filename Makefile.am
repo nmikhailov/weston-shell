@@ -4,7 +4,6 @@ endif
 
 SUBDIRS =					\
 	shared					\
-	src					\
 	desktop-shell				\
 	clients					\
 	data					\

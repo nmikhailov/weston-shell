@@ -31,6 +31,8 @@ BUILT_SOURCES =					\
 	desktop-shell-protocol.c		\
 	desktop-shell-server-protocol.h		\
 	xdg-shell-protocol.c			\
+	workspaces-server-protocol.h		\
+	input-method-server-protocol.h		\
 	xdg-shell-server-protocol.h
 
 CLEANFILES = $(BUILT_SOURCES)

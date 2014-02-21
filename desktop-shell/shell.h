@@ -24,7 +24,7 @@
 
 #include <stdbool.h>
 
-#include "compositor.h"
+#include <weston/compositor.h>
 
 enum animation_type {
 	ANIMATION_NONE,

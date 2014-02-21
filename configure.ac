@@ -446,10 +446,7 @@ AM_CONDITIONAL([HAVE_XMLLINT], [test "x$XMLLINT" != "x" -a "x$dtddir" != "x"])
 
 AC_CONFIG_FILES([Makefile
 		 shared/Makefile
-		 src/Makefile
 		 desktop-shell/Makefile
-		 src/version.h
-		 src/weston.pc
 		 clients/Makefile
 		 wcap/Makefile
 		 data/Makefile
