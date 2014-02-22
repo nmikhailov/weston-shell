@@ -7,15 +7,4 @@ SUBDIRS =					\
 
 DISTCHECK_CONFIGURE_FLAGS = --disable-setuid-install
 
-EXTRA_DIST = weston.ini.in wayland-scanner.mk
-
-weston.ini : $(srcdir)/weston.ini.in
-	$(AM_V_GEN)$(SED) \
-		-e 's|@bindir[@]|$(bindir)|g' \
-		-e 's|@abs_top_builddir[@]|$(abs_top_builddir)|g' \
-		-e 's|@libexecdir[@]|$(libexecdir)|g' \
-		$< > $@
-
-all-local : weston.ini
-
-CLEANFILES = weston.ini
+EXTRA_DIST = wayland-scanner.mk
