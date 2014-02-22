@@ -6,6 +6,11 @@ AM_CPPFLAGS =					\
 	-DBINDIR='"$(bindir)"'			\
 	$(CLIENT_CFLAGS) $(CAIRO_EGL_CFLAGS)
 
+BUILT_SOURCES = 		\
+	text-cursor-position-client-protocol.h		\
+	desktop-shell-client-protocol.h		\
+	workspaces-client-protocol.h
+	
 if BUILD_CLIENTS
 
 libexec_PROGRAMS =				\
