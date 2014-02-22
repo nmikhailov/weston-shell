@@ -10,7 +10,6 @@ AM_CPPFLAGS =					\
 	-DLIBEXECDIR='"$(libexecdir)"'		\
 	-DIN_WESTON
 
-if ENABLE_DESKTOP_SHELL
 desktop_shell = desktop-shell.la
 desktop_shell_la_LDFLAGS = -module -avoid-version
 desktop_shell_la_LIBADD = $(COMPOSITOR_LIBS)	\
@@ -25,7 +24,6 @@ desktop_shell_la_SOURCES =			\
 	desktop-shell-server-protocol.h 	\
 	xdg-shell-protocol.c			\
 	xdg-shell-server-protocol.h
-endif
 
 BUILT_SOURCES =					\
 	desktop-shell-protocol.c		\

@@ -11,8 +11,6 @@ BUILT_SOURCES = 		\
 	desktop-shell-client-protocol.h		\
 	workspaces-client-protocol.h
 	
-if BUILD_CLIENTS
-
 libexec_PROGRAMS =				\
 	weston-desktop-shell
 	
@@ -41,7 +39,6 @@ weston_desktop_shell_LDADD = libtoytoolkit.la
 
 
 CLEANFILES = $(BUILT_SOURCES)
-endif
 
 
 wayland_protocoldir = $(top_srcdir)/protocol
