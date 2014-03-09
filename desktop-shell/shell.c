@@ -4309,7 +4309,7 @@ shell_fade_init(struct desktop_shell *shell)
 	loop = wl_display_get_event_loop(shell->compositor->wl_display);
 	shell->fade.startup_timer =
 		wl_event_loop_add_timer(loop, fade_startup_timeout, shell);
-	wl_event_source_timer_update(shell->fade.startup_timer, 15000);
+	wl_event_source_timer_update(shell->fade.startup_timer, 1);
 }
 
 static void
