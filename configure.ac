@@ -398,7 +398,6 @@ AC_SUBST([dtddir])
 AM_CONDITIONAL([HAVE_XMLLINT], [test "x$XMLLINT" != "x" -a "x$dtddir" != "x"])
 
 AC_CONFIG_FILES([Makefile
-		 shared/Makefile
 		 desktop-shell/Makefile
 		 data/Makefile
 		 protocol/Makefile])
