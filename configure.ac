@@ -255,39 +255,6 @@ PKG_CHECK_MODULES(CAIRO, [cairo])
 
 PKG_CHECK_MODULES(TEST_CLIENT, [wayland-client])
 
-AC_ARG_ENABLE(simple-clients,
-              AS_HELP_STRING([--disable-simple-clients],
-                             [do not build the simple wl_shm clients]),,
-              enable_simple_clients=yes)
-AM_CONDITIONAL(BUILD_SIMPLE_CLIENTS, test "x$enable_simple_clients" = "xyes")
-if test x$enable_simple_clients = xyes; then
-  PKG_CHECK_MODULES(SIMPLE_CLIENT, [wayland-client])
-fi
-
-AC_ARG_ENABLE(simple-egl-clients,
-              AS_HELP_STRING([--disable-simple-egl-clients],
-                             [do not build the simple EGL clients]),,
-              enable_simple_egl_clients="$enable_egl")
-
-AC_ARG_ENABLE(clients, [  --enable-clients],, enable_clients=yes)
-AM_CONDITIONAL(BUILD_CLIENTS, test x$enable_clients = xyes)
-if test x$enable_clients = xyes; then
-  AC_DEFINE([BUILD_CLIENTS], [1], [Build the Wayland clients])
-
-  PKG_CHECK_MODULES(CLIENT, [wayland-client cairo >= 1.10.0 xkbcommon wayland-cursor])
-  PKG_CHECK_MODULES(SERVER, [wayland-server])
-  PKG_CHECK_MODULES(WESTON_INFO, [wayland-client])
-
-  # Only check for cairo-egl if a GL or GLES renderer requested
-  AS_IF([test "x$cairo_modules" = "xcairo-gl" -o "x$cairo_modules" = "xcairo-glesv2"], [
-    PKG_CHECK_MODULES(CAIRO_EGL, [wayland-egl egl >= 7.10 cairo-egl >= 1.11.3 $cairo_modules],
-                      [have_cairo_egl=yes], [have_cairo_egl=no])
-    AS_IF([test "x$have_cairo_egl" = "xyes"],
-	  [AC_DEFINE([HAVE_CAIRO_EGL], [1], [Have cairo-egl])],
-	  [AC_ERROR([cairo-egl not used because $CAIRO_EGL_PKG_ERRORS])])],
-  [have_cairo_egl=no])
-fi
-
 AC_ARG_ENABLE(resize-optimization,
               AS_HELP_STRING([--disable-resize-optimization],
                              [disable resize optimization allocating a big buffer in toytoolkit]),,
@@ -407,12 +374,6 @@ AC_MSG_NOTICE([Weston's default desktop shell client: $WESTON_SHELL_CLIENT])
 AC_DEFINE_UNQUOTED([WESTON_SHELL_CLIENT], ["$WESTON_SHELL_CLIENT"],
 		   [The default desktop shell client to load.])
 
-AC_ARG_ENABLE(demo-clients-install,
-              AS_HELP_STRING([--enable-demo-clients-install],
-                             [Install demo clients built with weston]),,
-			     enable_demo_clients_install=no)
-AM_CONDITIONAL(INSTALL_DEMO_CLIENTS, [test "x$enable_demo_clients_install" = "xyes"])
-
 PKG_CHECK_MODULES(LCMS, lcms2,
                   [have_lcms=yes], [have_lcms=no])
 if test "x$have_lcms" = xyes; then
@@ -439,7 +400,6 @@ AM_CONDITIONAL([HAVE_XMLLINT], [test "x$XMLLINT" != "x" -a "x$dtddir" != "x"])
 AC_CONFIG_FILES([Makefile
 		 shared/Makefile
 		 desktop-shell/Makefile
-		 clients/Makefile
 		 data/Makefile
 		 protocol/Makefile])
 AC_OUTPUT
@@ -466,13 +426,6 @@ AC_MSG_RESULT([
 	RDP Compositor			${enable_rdp_compositor}
 
 	Raspberry Pi BCM headers	${have_bcm_host}
-
-	Build Clients			${enable_clients}
-	Build EGL Clients		${have_cairo_egl}
-	Build Simple Clients		${enable_simple_clients}
-	Build Simple EGL Clients	${enable_simple_egl_clients}
-
-	Install Demo Clients		${enable_demo_clients_install}
 
 	Colord Support			${have_colord}
 	LCMS2 Support			${have_lcms}

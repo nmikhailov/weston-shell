@@ -29,7 +29,6 @@
 #include <string.h>
 
 #include "shell.h"
-#include "desktop-shell-server-protocol.h"
 #include "input-method-server-protocol.h"
 
 struct input_panel_surface {

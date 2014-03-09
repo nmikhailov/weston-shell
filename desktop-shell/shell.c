@@ -35,7 +35,6 @@
 #include <sys/types.h>
 
 #include "shell.h"
-#include "desktop-shell-server-protocol.h"
 #include "workspaces-server-protocol.h"
 #include "../shared/config-parser.h"
 #include "xdg-shell-server-protocol.h"
@@ -313,11 +312,8 @@ static void
 shell_grab_start(struct shell_grab *grab,
 		 const struct weston_pointer_grab_interface *interface,
 		 struct shell_surface *shsurf,
-		 struct weston_pointer *pointer,
-		 enum desktop_shell_cursor cursor)
+		 struct weston_pointer *pointer)
 {
-	struct desktop_shell *shell = shsurf->shell;
-
 	popup_grab_end(pointer);
 
 	grab->grab.interface = interface;
@@ -328,14 +324,6 @@ shell_grab_start(struct shell_grab *grab,
 
 	shsurf->grabbed = 1;
 	weston_pointer_start_grab(pointer, &grab->grab);
-	if (shell->child.desktop_shell) {
-		desktop_shell_send_grab_cursor(shell->child.desktop_shell,
-					       cursor);
-		weston_pointer_set_focus(pointer,
-					 get_default_view(shell->grab_surface),
-					 wl_fixed_from_int(0),
-					 wl_fixed_from_int(0));
-	}
 }
 
 static void
@@ -1501,7 +1489,7 @@ surface_move(struct shell_surface *shsurf, struct weston_seat *seat)
 			seat->pointer->grab_y;
 
 	shell_grab_start(&move->base, &move_grab_interface, shsurf,
-			 seat->pointer, DESKTOP_SHELL_CURSOR_MOVE);
+			 seat->pointer);
 
 	return 0;
 }
@@ -1689,7 +1677,7 @@ surface_resize(struct shell_surface *shsurf,
 	                                &resize->width, &resize->height);
 
 	shell_grab_start(&resize->base, &resize_grab_interface, shsurf,
-			 seat->pointer, edges);
+			 seat->pointer);
 
 	return 0;
 }
@@ -1795,8 +1783,7 @@ set_busy_cursor(struct shell_surface *shsurf, struct weston_pointer *pointer)
 	if (!grab)
 		return;
 
-	shell_grab_start(grab, &busy_cursor_grab_interface, shsurf, pointer,
-			 DESKTOP_SHELL_CURSOR_BUSY);
+	shell_grab_start(grab, &busy_cursor_grab_interface, shsurf, pointer);
 }
 
 static void
@@ -3564,168 +3551,6 @@ terminate_screensaver(struct desktop_shell *shell)
 }
 
 static void
-configure_static_view(struct weston_view *ev, struct weston_layer *layer)
-{
-	struct weston_view *v, *next;
-
-	wl_list_for_each_safe(v, next, &layer->view_list, layer_link) {
-		if (v->output == ev->output && v != ev) {
-			weston_view_unmap(v);
-			v->surface->configure = NULL;
-		}
-	}
-
-	weston_view_set_position(ev, ev->output->x, ev->output->y);
-
-	if (wl_list_empty(&ev->layer_link)) {
-		wl_list_insert(&layer->view_list, &ev->layer_link);
-		weston_compositor_schedule_repaint(ev->surface->compositor);
-	}
-}
-
-static void
-background_configure(struct weston_surface *es, int32_t sx, int32_t sy)
-{
-	struct desktop_shell *shell = es->configure_private;
-	struct weston_view *view;
-
-	view = container_of(es->views.next, struct weston_view, surface_link);
-
-	configure_static_view(view, &shell->background_layer);
-}
-
-static void
-desktop_shell_set_background(struct wl_client *client,
-			     struct wl_resource *resource,
-			     struct wl_resource *output_resource,
-			     struct wl_resource *surface_resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-	struct weston_surface *surface =
-		wl_resource_get_user_data(surface_resource);
-	struct weston_view *view, *next;
-
-	if (surface->configure) {
-		wl_resource_post_error(surface_resource,
-				       WL_DISPLAY_ERROR_INVALID_OBJECT,
-				       "surface role already assigned");
-		return;
-	}
-
-	wl_list_for_each_safe(view, next, &surface->views, surface_link)
-		weston_view_destroy(view);
-	view = weston_view_create(surface);
-
-	surface->configure = background_configure;
-	surface->configure_private = shell;
-	surface->output = wl_resource_get_user_data(output_resource);
-	view->output = surface->output;
-	desktop_shell_send_configure(resource, 0,
-				     surface_resource,
-				     surface->output->width,
-				     surface->output->height);
-}
-
-static void
-panel_configure(struct weston_surface *es, int32_t sx, int32_t sy)
-{
-	struct desktop_shell *shell = es->configure_private;
-	struct weston_view *view;
-
-	view = container_of(es->views.next, struct weston_view, surface_link);
-
-	configure_static_view(view, &shell->panel_layer);
-}
-
-static void
-desktop_shell_set_panel(struct wl_client *client,
-			struct wl_resource *resource,
-			struct wl_resource *output_resource,
-			struct wl_resource *surface_resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-	struct weston_surface *surface =
-		wl_resource_get_user_data(surface_resource);
-	struct weston_view *view, *next;
-
-	if (surface->configure) {
-		wl_resource_post_error(surface_resource,
-				       WL_DISPLAY_ERROR_INVALID_OBJECT,
-				       "surface role already assigned");
-		return;
-	}
-
-	wl_list_for_each_safe(view, next, &surface->views, surface_link)
-		weston_view_destroy(view);
-	view = weston_view_create(surface);
-
-	surface->configure = panel_configure;
-	surface->configure_private = shell;
-	surface->output = wl_resource_get_user_data(output_resource);
-	view->output = surface->output;
-	desktop_shell_send_configure(resource, 0,
-				     surface_resource,
-				     surface->output->width,
-				     surface->output->height);
-}
-
-static void
-lock_surface_configure(struct weston_surface *surface, int32_t sx, int32_t sy)
-{
-	struct desktop_shell *shell = surface->configure_private;
-	struct weston_view *view;
-
-	view = container_of(surface->views.next, struct weston_view, surface_link);
-
-	if (surface->width == 0)
-		return;
-
-	center_on_output(view, get_default_output(shell->compositor));
-
-	if (!weston_surface_is_mapped(surface)) {
-		wl_list_insert(&shell->lock_layer.view_list,
-			       &view->layer_link);
-		weston_view_update_transform(view);
-		shell_fade(shell, FADE_IN);
-	}
-}
-
-static void
-handle_lock_surface_destroy(struct wl_listener *listener, void *data)
-{
-	struct desktop_shell *shell =
-	    container_of(listener, struct desktop_shell, lock_surface_listener);
-
-	weston_log("lock surface gone\n");
-	shell->lock_surface = NULL;
-}
-
-static void
-desktop_shell_set_lock_surface(struct wl_client *client,
-			       struct wl_resource *resource,
-			       struct wl_resource *surface_resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-	struct weston_surface *surface =
-		wl_resource_get_user_data(surface_resource);
-
-	shell->prepare_event_sent = false;
-
-	if (!shell->locked)
-		return;
-
-	shell->lock_surface = surface;
-
-	shell->lock_surface_listener.notify = handle_lock_surface_destroy;
-	wl_signal_add(&surface->destroy_signal,
-		      &shell->lock_surface_listener);
-
-	weston_view_create(surface);
-	surface->configure = lock_surface_configure;
-	surface->configure_private = shell;
-}
-
-static void
 resume_desktop(struct desktop_shell *shell)
 {
 	struct workspace *ws = get_current_workspace(shell);
@@ -3752,47 +3577,6 @@ resume_desktop(struct desktop_shell *shell)
 	shell_fade(shell, FADE_IN);
 	weston_compositor_damage_all(shell->compositor);
 }
-
-static void
-desktop_shell_unlock(struct wl_client *client,
-		     struct wl_resource *resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-
-	shell->prepare_event_sent = false;
-
-	if (shell->locked)
-		resume_desktop(shell);
-}
-
-static void
-desktop_shell_set_grab_surface(struct wl_client *client,
-			       struct wl_resource *resource,
-			       struct wl_resource *surface_resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-
-	shell->grab_surface = wl_resource_get_user_data(surface_resource);
-	weston_view_create(shell->grab_surface);
-}
-
-static void
-desktop_shell_desktop_ready(struct wl_client *client,
-			    struct wl_resource *resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-
-	shell_fade_startup(shell);
-}
-
-static const struct desktop_shell_interface desktop_shell_implementation = {
-	desktop_shell_set_background,
-	desktop_shell_set_panel,
-	desktop_shell_set_lock_surface,
-	desktop_shell_unlock,
-	desktop_shell_set_grab_surface,
-	desktop_shell_desktop_ready
-};
 
 static enum shell_surface_type
 get_shell_surface_type(struct weston_surface *surface)
@@ -4171,7 +3955,7 @@ surface_rotate(struct shell_surface *surface, struct weston_seat *seat)
 	}
 
 	shell_grab_start(&rotate->base, &rotate_grab_interface, surface,
-			 seat->pointer, DESKTOP_SHELL_CURSOR_ARROW);
+			 seat->pointer);
 }
 
 static void
@@ -4366,7 +4150,6 @@ unlock(struct desktop_shell *shell)
 	if (shell->prepare_event_sent)
 		return;
 
-	desktop_shell_send_prepare_lock_surface(shell->child.desktop_shell);
 	shell->prepare_event_sent = true;
 }
 
@@ -4897,127 +4680,6 @@ bind_xdg_shell(struct wl_client *client, void *data, uint32_t version, uint32_t 
 		wl_resource_set_dispatcher(resource,
 					   xdg_shell_unversioned_dispatch,
 					   NULL, shell, NULL);
-}
-
-static void
-unbind_desktop_shell(struct wl_resource *resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-
-	if (shell->locked)
-		resume_desktop(shell);
-
-	shell->child.desktop_shell = NULL;
-	shell->prepare_event_sent = false;
-}
-
-static void
-bind_desktop_shell(struct wl_client *client,
-		   void *data, uint32_t version, uint32_t id)
-{
-	struct desktop_shell *shell = data;
-	struct wl_resource *resource;
-
-	resource = wl_resource_create(client, &desktop_shell_interface,
-				      MIN(version, 2), id);
-
-	if (client == shell->child.client) {
-		wl_resource_set_implementation(resource,
-					       &desktop_shell_implementation,
-					       shell, unbind_desktop_shell);
-		shell->child.desktop_shell = resource;
-
-		if (version < 2)
-			shell_fade_startup(shell);
-
-		return;
-	}
-
-	wl_resource_post_error(resource, WL_DISPLAY_ERROR_INVALID_OBJECT,
-			       "permission to bind desktop_shell denied");
-	wl_resource_destroy(resource);
-}
-
-static void
-screensaver_configure(struct weston_surface *surface, int32_t sx, int32_t sy)
-{
-	struct desktop_shell *shell = surface->configure_private;
-	struct weston_view *view;
-
-	if (surface->width == 0)
-		return;
-
-	/* XXX: starting weston-screensaver beforehand does not work */
-	if (!shell->locked)
-		return;
-
-	view = container_of(surface->views.next, struct weston_view, surface_link);
-	center_on_output(view, surface->output);
-
-	if (wl_list_empty(&view->layer_link)) {
-		wl_list_insert(shell->lock_layer.view_list.prev,
-			       &view->layer_link);
-		weston_view_update_transform(view);
-		wl_event_source_timer_update(shell->screensaver.timer,
-					     shell->screensaver.duration);
-		shell_fade(shell, FADE_IN);
-	}
-}
-
-static void
-screensaver_set_surface(struct wl_client *client,
-			struct wl_resource *resource,
-			struct wl_resource *surface_resource,
-			struct wl_resource *output_resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-	struct weston_surface *surface =
-		wl_resource_get_user_data(surface_resource);
-	struct weston_output *output = wl_resource_get_user_data(output_resource);
-	struct weston_view *view, *next;
-
-	/* Make sure we only have one view */
-	wl_list_for_each_safe(view, next, &surface->views, surface_link)
-		weston_view_destroy(view);
-	weston_view_create(surface);
-
-	surface->configure = screensaver_configure;
-	surface->configure_private = shell;
-	surface->output = output;
-}
-
-static const struct screensaver_interface screensaver_implementation = {
-	screensaver_set_surface
-};
-
-static void
-unbind_screensaver(struct wl_resource *resource)
-{
-	struct desktop_shell *shell = wl_resource_get_user_data(resource);
-
-	shell->screensaver.binding = NULL;
-}
-
-static void
-bind_screensaver(struct wl_client *client,
-		 void *data, uint32_t version, uint32_t id)
-{
-	struct desktop_shell *shell = data;
-	struct wl_resource *resource;
-
-	resource = wl_resource_create(client, &screensaver_interface, 1, id);
-
-	if (shell->screensaver.binding == NULL) {
-		wl_resource_set_implementation(resource,
-					       &screensaver_implementation,
-					       shell, unbind_screensaver);
-		shell->screensaver.binding = resource;
-		return;
-	}
-
-	wl_resource_post_error(resource, WL_DISPLAY_ERROR_INVALID_OBJECT,
-			       "interface object already bound");
-	wl_resource_destroy(resource);
 }
 
 struct switcher {
@@ -5683,15 +5345,6 @@ module_init(struct weston_compositor *ec,
 
 	if (wl_global_create(ec->wl_display, &xdg_shell_interface, 1,
 				  shell, bind_xdg_shell) == NULL)
-		return -1;
-
-	if (wl_global_create(ec->wl_display,
-			     &desktop_shell_interface, 2,
-			     shell, bind_desktop_shell) == NULL)
-		return -1;
-
-	if (wl_global_create(ec->wl_display, &screensaver_interface, 1,
-			     shell, bind_screensaver) == NULL)
 		return -1;
 
 	if (wl_global_create(ec->wl_display, &workspace_manager_interface, 1,
