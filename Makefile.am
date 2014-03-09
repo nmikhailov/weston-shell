@@ -1,5 +1,4 @@
 SUBDIRS =					\
-	shared					\
 	desktop-shell				\
 	data					\
 	protocol
